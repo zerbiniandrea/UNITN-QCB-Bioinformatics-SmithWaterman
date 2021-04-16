@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+# TODO
+# - Traceback
+# - Sequences as INPUT from USER
+
 import numpy as np
 import pandas as pd
 
@@ -9,8 +13,12 @@ class matrixElement:
         self.x = x
         self.y = y
 
-# CREATES A MATRIX WITH THE SHAPE OF THE TWO SEQUENCES
 def create_matrix(seq1, seq2):
+    """
+    Creates a matrix using a 2D numpy array
+    having as dimensions the length of the two input sequences + 1
+    """
+
     length1 = len(seq1)
     length2 = len(seq2)
 
@@ -23,12 +31,19 @@ def create_matrix(seq1, seq2):
 
 # EXECUTE SMITH WATERMAN ALGORITHM, RETURNING THE SCORING MATRIX 
 def smith_waterman(seq1,seq2, match_score=3, mismatch_score=-3, gap_penalty=-2):
+    """
+    Implementation of the Smith Waterman algorithm;
+    given two sequences 
+    and, optionally, the values match_score, mismatch_score and gap_penalty
+    returns the scoring matrix as a 2D numpy array
+    """
     # SCORES
-    # match_score = 3
-    # mismatch_score = -3
-    # gap_penalty = -2
+    #     match_score = 3
+    #     mismatch_score = -3
+    #     gap_penalty = -2
+    
 
-    # creating the matrix
+    # create the matrix
     matrix = create_matrix(seq1,seq2)
 
     nRows, nColumns = matrix.shape
@@ -53,6 +68,11 @@ def smith_waterman(seq1,seq2, match_score=3, mismatch_score=-3, gap_penalty=-2):
     return matrix
 
 def print_matrix(matrix,seq1,seq2):
+    """
+    Given a matrix as a 2D numpy array and two sequences,
+    prints and returns a DataFrame 
+    having the characters of the two input strings as the names of rows and columns.
+    """
     matrix = pd.DataFrame(matrix, columns=list(" "+seq1), index=list(" "+seq2))
     matrix=matrix.astype(int)
     print(matrix)
@@ -60,6 +80,11 @@ def print_matrix(matrix,seq1,seq2):
     return matrix
 
 def find_max(matrix):
+    """
+    Given a matrix as a 2D numpy array,
+    finds the coordinates of the maximum value and returns them as a list, 
+    in case the matrix contains multiple times the same maximum value
+    """
     result = np.where(matrix == np.amax(matrix))
     # zip the 2 arrays to get the exact coordinates
     listOfCordinates = list(zip(result[0], result[1]))
@@ -70,6 +95,11 @@ def find_max(matrix):
     return listOfCordinates
 
 def find_best_scores(matrix, min_score=3):
+    """
+    Given a matrix and, optionally, a minimum score,
+    returns a list of Objects having a score higher than the minimum score,
+    each containing the value of the item and its coordinates in the matrix (X,Y)
+    """
     nRows, nColumns = matrix.shape
 
     best_scores = []
