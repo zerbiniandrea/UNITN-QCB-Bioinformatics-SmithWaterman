@@ -1,18 +1,10 @@
 #!/usr/bin/env python
 
 # TODO
-# - Traceback with multiple max values
 # - Sequences as INPUT from USER
 
 import numpy as np
 import pandas as pd
-
-# needed if I want an Object instead of a list of tuples in find_highest_scores
-# class matrixElement:
-#     def __init__(self,score,x,y):
-#         self.score = score
-#         self.x = x
-#         self.y = y
 
 def create_matrix(seq1, seq2):
     """
@@ -24,9 +16,6 @@ def create_matrix(seq1, seq2):
     length2 = len(seq2)
 
     matrix = np.zeros((length2+1,length1+1))
-
-    # SET THE TWO SEQUENCES AS NAMES OF ROWS AND COLUMNS IN A DATAFRAME
-    #matrix = pd.DataFrame(matrix, columns=list(seq1)+1, index=list(seq2)+1)
     
     return matrix
 
@@ -48,8 +37,6 @@ def smith_waterman(seq1, seq2, match_score=3, mismatch_score=-3, gap_penalty=-2)
 
     n_rows, n_columns = matrix.shape
 
-    #https://stackoverflow.com/questions/12666494/how-do-i-decide-which-way-to-backtrack-in-the-smith-waterman-algorithm
-
     for i in range(1,n_rows):
         for j in range(1,n_columns):
             # DIAGONAL SCORE
@@ -67,20 +54,28 @@ def smith_waterman(seq1, seq2, match_score=3, mismatch_score=-3, gap_penalty=-2)
 
     return matrix
 
-# TODO
-# atm works only for 1 max value
-# need a loop for every max value + check multiple paths (take every option instead of elif)
 def smith_waterman_traceback(matrix, seq1, seq2, match_score=3, mismatch_score=-3, gap_penalty=-2):
     list_of_coordinates = find_max(matrix)
 
-    row = list_of_coordinates[0][0]
-    column = list_of_coordinates[0][1]
+    res = []
 
-    align_seq1 = []
-    align_seq2 = []
+    # for every pair of coordinates containing the maximum value
+    for row,column in list_of_coordinates:
+        tmp_res = smith_waterman_traceback_rec(matrix, row, column, [], [], seq1, seq2, match_score, mismatch_score, gap_penalty)
 
-    #for x,y in list_of_coordinates:
+        # asserting that the traceback_rec function returned a list of tuples
+        assert len(tmp_res)%2 == 0, "Something went wrong with the size of the result in the traceback function!"
 
+        # this is needed to return a list of tuples, each containing the two alignment sequences
+        # because of the structure of the traceback_rec function
+        # the value returned is a list of multiple alignments, 
+        # containing 2 values for each "path"
+        for i in range(0,len(tmp_res),2):
+            res.append((tmp_res[i],tmp_res[i+1]))
+
+    return res
+
+def smith_waterman_traceback_rec(matrix, row, column, align_seq1, align_seq2, seq1, seq2, match_score, mismatch_score, gap_penalty):
     # starting from the score in the position of the maximum score
     # calculate the score that the "parent" cells should contain 
     # and check which one is actually correct
@@ -89,7 +84,15 @@ def smith_waterman_traceback(matrix, seq1, seq2, match_score=3, mismatch_score=-
     # starting from all the 3 "parent" cells (upper, left-most and diagonal)
     # and check which one gets the score of the current cell
 
-    while not matrix[row][column] == 0:
+    # stopping when finding a zero, meaning that the algorithm reached the start of the alignment
+
+    res = []
+
+    if matrix[row][column] == 0:
+        # return the two sequences as a tuple
+        # reverting the sequences because of them being built starting from the last character of the string
+        return (align_seq1[::-1], align_seq2[::-1])
+    else:
         #basically the same scores in smith_waterman but in reverse
         if seq1[column-1]==seq2[row-1]: # -1 because the 1st row and the 1st column of the matrix are filled with zeros
             diagonal_score = matrix[row][column] - match_score
@@ -99,28 +102,45 @@ def smith_waterman_traceback(matrix, seq1, seq2, match_score=3, mismatch_score=-
         horizontal_score = matrix[row][column] - gap_penalty
         vertical_score = matrix[row][column] - gap_penalty
 
-        # check which cell contains the values obtained
-        # and add the corresponding characters of the sequences to a list
+        # check if the values obtained are the values of the "parents"
         if matrix[row-1][column-1] == diagonal_score:
-            row-=1
-            column-=1
-            align_seq1.append(seq1[column])
-            align_seq2.append(seq2[row])
-        elif matrix[row-1][column] == vertical_score:
-            row-=1
-            align_seq1.append("-")
-            align_seq2.append(seq2[row])
-        elif matrix[row][column-1] == horizontal_score:
-            column-=1
-            align_seq1.append(seq1[column])
-            align_seq2.append("-")
+            # need to create copies of the original sequences to append the correct characters
+            # row-=1
+            # column-=1
+            # align_seq1.append(seq1[column])
+            # align_seq2.append(seq2[row])
+            align_tmp1 = align_seq1.copy()
+            align_tmp2 = align_seq2.copy()
+            align_tmp1.append(seq1[column-1])
+            align_tmp2.append(seq2[row-1])
 
-    # revert the two sequences
-    align_seq1 = align_seq1[::-1]
-    align_seq2 = align_seq2[::-1]
+            res+=smith_waterman_traceback_rec(matrix,row-1,column-1,align_tmp1,align_tmp2,seq1,seq2,match_score,mismatch_score,gap_penalty)
+        
+        if matrix[row-1][column] == vertical_score:
+            # need to create copies of the original sequences to append the correct characters
+            # row-=1
+            # align_seq1.append("-")
+            # align_seq2.append(seq2[row])
+            align_tmp1 = align_seq1.copy()
+            align_tmp2 = align_seq2.copy()
+            align_tmp1.append("-")
+            align_tmp2.append(seq2[row-1])
 
-    print(align_seq1)
-    print(align_seq2)
+            res+=smith_waterman_traceback_rec(matrix,row-1,column,align_tmp1,align_tmp2,seq1,seq2,match_score,mismatch_score,gap_penalty)
+        
+        if matrix[row][column-1] == horizontal_score:
+            # need to create copies of the original sequences to append the correct characters
+            # column-=1
+            # align_seq1.append(seq1[column])
+            # align_seq2.append("-")
+            align_tmp1 = align_seq1.copy()
+            align_tmp2 = align_seq2.copy()
+            align_tmp1.append(seq1[column-1])
+            align_tmp2.append("-")
+
+            res+=smith_waterman_traceback_rec(matrix,row,column-1,align_tmp1,align_tmp2,seq1,seq2,match_score,mismatch_score,gap_penalty)
+        
+        return res
 
 def print_matrix(matrix, seq1, seq2):
     """
@@ -148,9 +168,6 @@ def find_max(matrix):
     
     print("\nThe maximum score in the matrix is",max_score,"found at these coordinates:",list_of_coordinates)
 
-    #for coord in list_of_coordinates:
-    #    print(coord)
-
     return list_of_coordinates
 
 def find_highest_scores(matrix, min_score=3):
@@ -171,10 +188,16 @@ def find_highest_scores(matrix, min_score=3):
     return highest_scores
 
 if __name__ == '__main__':
-    seq1 = "TGACTGTTGT"
+    seq1 = "TGTTATG"
     seq2 = "TAGGTGTGTG"
 
+    # computing the scoring matrix and saving it
     matrix = smith_waterman(seq1,seq2)
 
+    # just to print the matrix with the characters of the sequences along the rows and columns
     print_matrix(matrix,seq1,seq2)
-    smith_waterman_traceback(matrix,seq1,seq2)
+
+    # traceback function, to find the alignments
+    res = smith_waterman_traceback(matrix,seq1,seq2)
+
+
