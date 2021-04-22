@@ -7,10 +7,27 @@ Bioinformatics - Algorithms for Bioinformatics
 """
 
 # TODO
-# - Sequences as INPUT from USER
+# - Help function
+# - Scores as input from user
+# - 2 files for 2 different sequences?
+# - maybe fix input arguments
 
 import numpy as np
 import pandas as pd
+import sys
+
+# if I need to get only a single character
+# EXAMPLE:
+# in interactive mode, press F to choose a file and press S to insert a string
+
+# getch = _Getch()
+# class _GetchWindows:
+#     def __init__(self):
+#         import msvcrt
+
+#     def __call__(self):
+#         import msvcrt
+#         return msvcrt.getch()
 
 def create_matrix(seq1, seq2):
     """
@@ -226,9 +243,73 @@ def print_res(align_res):
         print(" ".join(align[0]))
         print(" ".join(align[1]),"\n")
 
+def read_fasta_seq(file):
+    """
+    Read a file, assuming it's in a fasta format
+    and returns the two sequences
+    """
+    seq_dict = {}
+    header = ""
+
+    with open(file,"r") as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith(">"):
+                header = line
+                seq_dict[header] = ""
+            else:
+                line = line.upper()
+                seq_dict[header] += line
+
+    # if the file doesn't contain EXACTLY 2 sequences
+    if not len(seq_dict.values()) == 2:
+        print("INVALID FILE: the fasta file doesn't contain EXACTLY 2 sequences")
+        sys.exit(-1)
+
+    return seq_dict
+
+def input_check():
+    """
+    Checks the input parameters and 
+    """
+    # no arguments
+    if len(sys.argv) < 2:
+        # TODO
+        print("help function")
+        sys.exit(1)
+    else:
+        if sys.argv[1] == "-h" or sys.argv[1] == "--help":
+            # TODO
+            print("help function")
+        elif sys.argv[1] == "-i" or sys.argv[1] == "--interactive":
+            print("=============================")
+            print("Entering interactive mode...")
+            print("=============================")
+            print("|")
+            seq1 = input("| Please insert the first sequence: ")
+            seq2 = input("| Please insert the second sequence:")
+            print("|")
+            print("=============================\n")
+        elif sys.argv[1] == "-f" or sys.argv[1] == "--file":
+            if len(sys.argv) < 3:
+                print("Not enough parameters!")
+                sys.exit(-1)
+            else:
+                seq_dict = read_fasta_seq(sys.argv[2])
+                
+                seq1 = list(seq_dict.values())[0]
+                seq2 = list(seq_dict.values())[1]
+
+    # converting the two sequences to upper case
+    seq1 = seq1.upper()
+    seq2 = seq2.upper()
+
+    return seq1, seq2
+
 if __name__ == '__main__':
-    seq1 = "TGTTATG"
-    seq2 = "TAGGTGTGTG"
+    #seq1 = "TGTTATG"
+    #seq2 = "TAGGTGTGTG"
+    seq1, seq2 = input_check()
 
     # computing the scoring matrix and saving it
     matrix = smith_waterman(seq1,seq2)
