@@ -209,6 +209,11 @@ def find_max(matrix):
     # zip the 2 arrays to get the exact coordinates
     list_of_coordinates = list(zip(result[0], result[1]))
     
+    # exit the program if no alignment was found (max=0)
+    if max_score == 0:
+        print("\nNo alignment was found!")
+        sys.exit(0)
+
     print("\nThe maximum local alignment score in the matrix is",max_score,"found at these coordinates:",list_of_coordinates,"\n")
 
     return max_score, list_of_coordinates
@@ -268,26 +273,38 @@ def read_fasta_seq(file):
 
     return seq_dict
 
+def help_function():
+    """
+    Print the help function, explaining the input arguments
+    """
+    print("|=================================================================|")
+    print("| This is a Python implementation of the Smith Waterman algorithm.|")
+    print("|=================================================================|")
+    print("\n- To use the program in an interactive mode, please use -i or --interactive as the only parameter.")
+    print("\tExample: python Smith_Waterman.py -i")
+    print("\n- If you want to input two sequences from a file, use -f or --file as the first parameter, \n"+
+        "  followed by the name of the file containing the sequences. \n"+
+        "  The file is expected to be formatted as a fasta file containing two sequences.")
+    print("\tExample: python Smith_Waterman.py -f file.fasta")
+    sys.exit(1)
+
 def input_check():
     """
-    Checks the input parameters and 
+    Checks the input parameters and returns the two input sequences
     """
     # no arguments
     if len(sys.argv) < 2:
-        # TODO
-        print("help function")
-        sys.exit(1)
+        help_function()
     else:
         if sys.argv[1] == "-h" or sys.argv[1] == "--help":
-            # TODO
-            print("help function")
+            help_function()
         elif sys.argv[1] == "-i" or sys.argv[1] == "--interactive":
-            print("=============================")
-            print("Entering interactive mode...")
-            print("=============================")
+            print("| ================================= |")
+            print("|    Entering interactive mode...   |")
+            print("| ================================= |")
             print("|")
-            seq1 = input("| Please insert the first sequence: ")
-            seq2 = input("| Please insert the second sequence:")
+            seq1 = input("Please insert the first sequence: ")
+            seq2 = input("Please insert the second sequence: ")
             print("|")
             print("=============================\n")
         elif sys.argv[1] == "-f" or sys.argv[1] == "--file":
