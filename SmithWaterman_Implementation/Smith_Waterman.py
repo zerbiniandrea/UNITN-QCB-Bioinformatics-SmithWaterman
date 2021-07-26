@@ -6,12 +6,6 @@ UniTN - Quantitative and Computational Biology (QCB)
 Bioinformatics - Algorithms for Bioinformatics
 """
 
-# TODO
-# - Help function
-# - Scores as input from user
-# - 2 files for 2 different sequences?
-# - maybe fix input arguments
-
 import numpy as np
 import pandas as pd
 import sys
@@ -41,7 +35,7 @@ def create_matrix(seq1, seq2):
     # length+1 considering the first column and the first row
     # of the matrix that should contain only zeros
     matrix = np.zeros((length2+1,length1+1))
-    
+
     return matrix
 
 def smith_waterman(seq1, seq2, match_score=3, mismatch_score=-3, gap_penalty=-2):
@@ -151,7 +145,7 @@ def smith_waterman_traceback_rec(matrix, row, column, align_seq1, align_seq2, se
 
             # recursion considering the diagonal element
             res+=smith_waterman_traceback_rec(matrix,row-1,column-1,align_tmp1,align_tmp2,seq1,seq2,match_score,mismatch_score,gap_penalty)
-        
+
         if matrix[row-1][column] == vertical_score:
             # need to create copies of the original sequences to append the correct characters
             # row-=1
@@ -164,7 +158,7 @@ def smith_waterman_traceback_rec(matrix, row, column, align_seq1, align_seq2, se
 
             # recursion considering the vertical element
             res+=smith_waterman_traceback_rec(matrix,row-1,column,align_tmp1,align_tmp2,seq1,seq2,match_score,mismatch_score,gap_penalty)
-        
+
         if matrix[row][column-1] == horizontal_score:
             # need to create copies of the original sequences to append the correct characters
             # column-=1
@@ -177,7 +171,7 @@ def smith_waterman_traceback_rec(matrix, row, column, align_seq1, align_seq2, se
 
             # recursion considering the horizontal element
             res+=smith_waterman_traceback_rec(matrix,row,column-1,align_tmp1,align_tmp2,seq1,seq2,match_score,mismatch_score,gap_penalty)
-        
+
         return res
 
 def print_matrix(matrix, seq1, seq2):
@@ -191,6 +185,7 @@ def print_matrix(matrix, seq1, seq2):
     # and aren't characters of the sequences
     matrix = pd.DataFrame(matrix, columns=list(" "+seq1), index=list(" "+seq2))
     matrix=matrix.astype(int)
+    print("Dynamic programming matrix visualization:\n")
     print(matrix)
 
     return matrix
@@ -208,7 +203,7 @@ def find_max(matrix):
     result = np.where(matrix == max_score)
     # zip the 2 arrays to get the exact coordinates
     list_of_coordinates = list(zip(result[0], result[1]))
-    
+
     # exit the program if no alignment was found (max=0)
     if max_score == 0:
         print("\nNo alignment was found!")
@@ -280,12 +275,19 @@ def help_function():
     print("|=================================================================|")
     print("| This is a Python implementation of the Smith Waterman algorithm.|")
     print("|=================================================================|")
+
     print("\n- To use the program in an interactive mode, please use -i or --interactive as the only parameter.")
-    print("\tExample: python Smith_Waterman.py -i")
+    print("\tExample: \n\t\tpython Smith_Waterman.py -i")
+
     print("\n- If you want to input two sequences from a file, use -f or --file as the first parameter, \n"+
         "  followed by the name of the file containing the sequences. \n"+
         "  The file is expected to be formatted as a fasta file containing two sequences.")
-    print("\tExample: python Smith_Waterman.py -f file.fasta")
+    print("\tExample: \n\t\tpython Smith_Waterman.py -f file.fasta")
+
+    print("\n\nDEFAULT SCORES:\n"+
+        "\t- match_score = 3\n"+
+        "\t- mismatch_score = -3\n"+
+        "\t- gap_penalty = -2\n")
     sys.exit(1)
 
 def input_check():
@@ -303,10 +305,10 @@ def input_check():
             print("|    Entering interactive mode...   |")
             print("| ================================= |")
             print("|")
-            seq1 = input("Please insert the first sequence: ")
-            seq2 = input("Please insert the second sequence: ")
+            seq1 = input("| Please insert the first sequence: \n| ")
+            seq2 = input("| Please insert the second sequence: \n| ")
             print("|")
-            print("=============================\n")
+            print("| ================================= |\n")
         elif sys.argv[1] == "-f" or sys.argv[1] == "--file":
             if len(sys.argv) < 3:
                 print("Not enough parameters!")
@@ -317,6 +319,12 @@ def input_check():
                 seq1 = list(seq_dict.values())[0]
                 seq2 = list(seq_dict.values())[1]
 
+    # exit the program if one or more strings are empty
+    if not seq1 or not seq2:
+        print("\n\nERROR:")
+        print("\tOne or more input strings are empty!")
+        sys.exit(-1)
+
     # converting the two sequences to upper case
     seq1 = seq1.upper()
     seq2 = seq2.upper()
@@ -324,18 +332,26 @@ def input_check():
     return seq1, seq2
 
 if __name__ == '__main__':
-    #seq1 = "TGTTATG"
-    #seq2 = "TAGGTGTGTG"
+    # SCORES
+    #   match_score = 3
+    #   mismatch_score = -3
+    #   gap_penalty = -2
+    # EXAMPLE SEQUENCES
+    #   seq1 = "TGTTATG"
+    #   seq2 = "TAGGTGTGTG"
+
+    # get the two input sequences
+    # either from a file or from the interactive mode
     seq1, seq2 = input_check()
 
     # computing the scoring matrix and saving it
-    matrix = smith_waterman(seq1,seq2)
+    matrix = smith_waterman(seq1,seq2,5,-3,-2)
 
     # just to print the matrix with the characters of the sequences along the rows and columns
     print_matrix(matrix,seq1,seq2)
 
     # traceback function, to find the alignments
-    align_res = smith_waterman_traceback(matrix,seq1,seq2)
+    align_res = smith_waterman_traceback(matrix,seq1,seq2,5,-3,-2)
 
     # print the alignments found
     print_res(align_res)
