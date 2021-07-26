@@ -174,9 +174,9 @@ def smith_waterman_traceback_rec(matrix, row, column, align_seq1, align_seq2, se
 
         return res
 
-def print_matrix(matrix, seq1, seq2):
+def print_matrix(matrix, seq1, seq2, match_score, mismatch_score, gap_penalty):
     """
-    Given a matrix as a 2D numpy array and two sequences,
+    Given a matrix as a 2D numpy array, two sequences and the scores
     prints and returns a DataFrame 
     having the characters of the two input strings as the names of rows and columns.
     """
@@ -185,9 +185,14 @@ def print_matrix(matrix, seq1, seq2):
     # and aren't characters of the sequences
     matrix = pd.DataFrame(matrix, columns=list(" "+seq1), index=list(" "+seq2))
     matrix=matrix.astype(int)
-    print("Dynamic programming matrix visualization:\n")
+
+    print("Dynamic programming matrix:\n")
     print(matrix)
 
+    print("\n\nScores used:")
+    print("\tMatch score: "+str(match_score))
+    print("\tMismatch score: "+str(mismatch_score))
+    print("\tGap penalty: "+str(gap_penalty))
     return matrix
 
 def find_max(matrix):
@@ -288,12 +293,29 @@ def help_function():
         "\t- match_score = 3\n"+
         "\t- mismatch_score = -3\n"+
         "\t- gap_penalty = -2\n")
+    print("To change the default scores, use -s or --scores as a parameter.")
+    print("In interactive mode you will be asked to input them, \n"+
+        "while in non interactive mode the values for the scores are expected as input values \n"+
+        "following this order: match score, mismatch score, gap penalty")
+    print("\tExample: "+
+        "\n\t\tpython Smith_Waterman.py -i -s "+
+        "\n\t\tpython Smith_Waterman.py -f file.fasta 3 -3 -2")
+
+    print("\nPLEASE REMEMBER:\n"+
+        "Usually the match score is a positive value, \n"+
+        "While the mismatch and gap scores are negatie values!")
     sys.exit(1)
 
 def input_check():
     """
     Checks the input parameters and returns the two input sequences
     """
+    match_score = 3
+    mismatch_score = -3
+    gap_penalty = -2
+
+    print("")
+
     # no arguments
     if len(sys.argv) < 2:
         help_function()
@@ -308,7 +330,21 @@ def input_check():
             seq1 = input("| Please insert the first sequence: \n| ")
             seq2 = input("| Please insert the second sequence: \n| ")
             print("|")
-            print("| ================================= |\n")
+            print("| ================================= |")
+
+            # input different scores
+            if "-s" in sys.argv or "--scores" in sys.argv:
+                print("|")
+                print("| Please insert the desired scores.\n"+
+                    "!\n"+
+                    "! Remember that usually the match score is a positive value,\n"+
+                    "! while the mismatch score and the gap penalty are negative values!\n"+
+                    "!")
+                match_score = input("| \tMatch score: ")
+                mismatch_score = input("| \tMismatch score: ")
+                gap_penalty = input("| \tGap penalty: ")
+                print("|")
+                print("| ================================= |")
         elif sys.argv[1] == "-f" or sys.argv[1] == "--file":
             if len(sys.argv) < 3:
                 print("Not enough parameters!")
@@ -319,17 +355,40 @@ def input_check():
                 seq1 = list(seq_dict.values())[0]
                 seq2 = list(seq_dict.values())[1]
 
+            # input different scores
+            if "-s" in sys.argv or "--scores" in sys.argv:
+                # if not all scores are provided in input
+                if len(sys.argv) < 7:
+                    print("ERROR:")
+                    print("\tYou must provide all the scores as input values!")
+                    sys.exit(-1)
+                else:
+                    match_score = sys.argv[4]
+                    mismatch_score = sys.argv[5]
+                    gap_penalty = sys.argv[6]
+    
+    print("")
+
     # exit the program if one or more strings are empty
     if not seq1 or not seq2:
         print("\n\nERROR:")
         print("\tOne or more input strings are empty!")
         sys.exit(-1)
 
+    try:
+        match_score = int(match_score)
+        mismatch_score = int(mismatch_score)
+        gap_penalty = int(gap_penalty)
+    except ValueError:
+        print("\n\nERROR:")
+        print("\tOne or more input scores are not numbers!")
+        sys.exit(-1)
+
     # converting the two sequences to upper case
     seq1 = seq1.upper()
     seq2 = seq2.upper()
 
-    return seq1, seq2
+    return seq1, seq2, match_score, mismatch_score, gap_penalty
 
 if __name__ == '__main__':
     # SCORES
@@ -342,16 +401,16 @@ if __name__ == '__main__':
 
     # get the two input sequences
     # either from a file or from the interactive mode
-    seq1, seq2 = input_check()
+    seq1, seq2, match_score, mismatch_score, gap_penalty = input_check()
 
     # computing the scoring matrix and saving it
-    matrix = smith_waterman(seq1,seq2,5,-3,-2)
+    matrix = smith_waterman(seq1,seq2,match_score,mismatch_score,gap_penalty)
 
     # just to print the matrix with the characters of the sequences along the rows and columns
-    print_matrix(matrix,seq1,seq2)
+    print_matrix(matrix,seq1,seq2, match_score, mismatch_score, gap_penalty)
 
     # traceback function, to find the alignments
-    align_res = smith_waterman_traceback(matrix,seq1,seq2,5,-3,-2)
+    align_res = smith_waterman_traceback(matrix,seq1,seq2,match_score,mismatch_score,gap_penalty)
 
     # print the alignments found
     print_res(align_res)
