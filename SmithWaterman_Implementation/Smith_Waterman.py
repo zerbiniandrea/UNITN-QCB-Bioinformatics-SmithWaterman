@@ -281,14 +281,17 @@ def help_function():
     print("| This is a Python implementation of the Smith Waterman algorithm.|")
     print("|=================================================================|")
 
+    # interactive mode help
     print("\n- To use the program in an interactive mode, please use -i or --interactive as the only parameter.")
     print("\tExample: \n\t\tpython Smith_Waterman.py -i")
 
+    # non interactive mode help
     print("\n- If you want to input two sequences from a file, use -f or --file as the first parameter, \n"+
         "  followed by the name of the file containing the sequences. \n"+
         "  The file is expected to be formatted as a fasta file containing two sequences.")
     print("\tExample: \n\t\tpython Smith_Waterman.py -f file.fasta")
 
+    # scores help
     print("\n\nDEFAULT SCORES:\n"+
         "\t- match_score = 3\n"+
         "\t- mismatch_score = -3\n"+
@@ -304,12 +307,14 @@ def help_function():
     print("\nPLEASE REMEMBER:\n"+
         "Usually the match score is a positive value, \n"+
         "While the mismatch and gap scores are negatie values!")
+
     sys.exit(1)
 
 def input_check():
     """
     Checks the input parameters and returns the two input sequences
     """
+    # default scores
     match_score = 3
     mismatch_score = -3
     gap_penalty = -2
@@ -370,11 +375,15 @@ def input_check():
     print("")
 
     # exit the program if one or more strings are empty
+    # not checking for numbers or symbols
+    # if needed one could align strings containing different symbols
+    # as long as they are strings
     if not seq1 or not seq2:
         print("\n\nERROR:")
         print("\tOne or more input strings are empty!")
         sys.exit(-1)
 
+    # exit the program if one or more scores are not numbers
     try:
         match_score = int(match_score)
         mismatch_score = int(mismatch_score)
